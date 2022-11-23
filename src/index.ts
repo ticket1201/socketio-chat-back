@@ -29,6 +29,8 @@ const messages = [
         }
     },
 ]
+const users = new Map()
+
 
 app.get('/', (req, res) => {
     res.send('<h1>Hello world</h1>');
@@ -36,18 +38,28 @@ app.get('/', (req, res) => {
 
 
 io.on('connection', (socketChannel) => {
+    users.set(socketChannel, {id: new Date().getTime().toString(), name: ''})
+
+    socketChannel.on('client-name-sent', (name: string) => {
+        if (typeof name !== 'string') {
+            return
+        }
+        const user = users.get(socketChannel)
+        user.name = name;
+        socketChannel.emit('new-name-sent', name)
+        const names:Array<string> = [];
+            users.forEach(el => names.push(el.name))
+        io.emit('user-sent', names)
+    })
 
     socketChannel.on('client-message-sent', (text: string) => {
         let messageItem = {
             message: text,
-            id: '333' + new Date().getTime(),
-            user: {
-                id: '333',
-                name: 'Anonim'
-            }
+            id: new Date().getTime().toString(),
+            user: {...users.get(socketChannel)}
         }
         messages.push(messageItem)
-        socketChannel.emit('new-message-sent', messageItem)
+        io.emit('new-message-sent', messageItem)
         console.log(text);
     })
 
