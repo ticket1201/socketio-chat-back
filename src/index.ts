@@ -63,6 +63,14 @@ io.on('connection', (socketChannel) => {
         console.log(text);
     })
 
+    socketChannel.on('disconnect', () => {
+        users.delete(socketChannel)
+        const names:Array<string> = [];
+        users.forEach(el => names.push(el.name))
+        io.emit('user-sent', names)
+        console.log('user disconnected');
+    });
+
     socketChannel.emit('init-messages-published', messages)
     console.log('a user connected');
 })
